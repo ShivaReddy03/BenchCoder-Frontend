@@ -26,15 +26,18 @@ const theme = createTheme({
 
 function App() {
   const dispatch = useDispatch()
-  const { isAuthenticated } = useSelector((state) => state.auth)
+  const { isAuthenticated, user } = useSelector((state) => state.auth) // Get user from state
   
   useEffect(() => {
-    // Try to fetch user profile if token exists
+    // Try to fetch user profile if token exists but we don't have user data
     const token = localStorage.getItem('accessToken')
-    if (token) {
+    if (token && !user) {
       dispatch(fetchProfile())
     }
-  }, [dispatch])
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [dispatch]) // Remove user from dependency array
+  // We only want this to run once on component mount
+  
   
   return (
     <ThemeProvider theme={theme}>

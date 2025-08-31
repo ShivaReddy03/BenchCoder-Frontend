@@ -34,6 +34,11 @@ export const fetchProfile = createAsyncThunk(
       const response = await api.get('/auth/profile/')
       return response.data
     } catch (error) {
+      // If we get a 401, it might be because the token is invalid
+      if (error.response?.status === 401) {
+        localStorage.removeItem('accessToken')
+        localStorage.removeItem('refreshToken')
+      }
       return rejectWithValue(error.response.data)
     }
   }
@@ -66,9 +71,10 @@ const authSlice = createSlice({
         state.error = null
       })
       .addCase(login.fulfilled, (state, action) => {
-        state.loading = false
-        state.isAuthenticated = true
-      })
+      state.loading = false
+      state.isAuthenticated = true
+      state.user = action.payload.user // Store the user data from the response
+    })
       .addCase(login.rejected, (state, action) => {
         state.loading = false
         state.error = action.payload

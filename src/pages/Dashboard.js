@@ -5,7 +5,6 @@ import {
   Grid, 
   Typography, 
   Paper, 
-  Box,
   Alert
 } from '@mui/material'
 import { fetchProblems } from '../store/slices/problemsSlice'
