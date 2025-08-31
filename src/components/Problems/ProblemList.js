@@ -7,8 +7,10 @@ import {
   CircularProgress,
   Typography,
   Box,
+  IconButton,
 } from '@mui/material'
 import { useNavigate } from 'react-router-dom'
+import ArrowForwardIosIcon from '@mui/icons-material/ArrowForwardIos'
 
 const ProblemList = ({ problems, loading }) => {
   const navigate = useNavigate()
@@ -60,15 +62,20 @@ const ProblemList = ({ problems, loading }) => {
       {problems.map((problem) => (
         <ListItem
           key={problem.id}
-          button
           onClick={() => navigate(`/problem/${problem.id}`)}
           sx={{ 
             borderBottom: '1px solid',
             borderColor: 'divider',
             '&:hover': {
               bgcolor: 'action.hover',
+              cursor: 'pointer',
             },
           }}
+          secondaryAction={
+            <IconButton edge="end" aria-label="go">
+              <ArrowForwardIosIcon />
+            </IconButton>
+          }
         >
           <ListItemText
             primary={
