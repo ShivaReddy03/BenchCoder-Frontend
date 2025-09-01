@@ -1,4 +1,4 @@
-import React from 'react'
+import React, { useState } from 'react'
 import { useDispatch, useSelector } from 'react-redux'
 import { useNavigate } from 'react-router-dom'
 import {
@@ -7,23 +7,42 @@ import {
   Typography,
   Button,
   Box,
+  IconButton,
+  Menu,
+  MenuItem,
 } from '@mui/material'
+import AccountCircle from '@mui/icons-material/AccountCircle'
 import { logout } from '../../store/slices/authSlice'
 
 const Navbar = () => {
   const dispatch = useDispatch()
   const navigate = useNavigate()
   const { user } = useSelector((state) => state.auth)
-  
+  const [anchorEl, setAnchorEl] = useState(null)
+
+  const handleMenu = (event) => {
+    setAnchorEl(event.currentTarget)
+  }
+
+  const handleClose = () => {
+    setAnchorEl(null)
+  }
+
   const handleLogout = () => {
     dispatch(logout())
     navigate('/login')
+    handleClose()
   }
-  
+
   const goToDashboard = () => {
     navigate('/')
   }
-  
+
+  const goToProfile = () => {
+    navigate('/profile')
+    handleClose()
+  }
+
   return (
     <AppBar position="static">
       <Toolbar>
@@ -39,9 +58,34 @@ const Navbar = () => {
           <Button color="inherit" sx={{ mr: 2 }}>
             {user?.username}
           </Button>
-          <Button color="inherit" onClick={handleLogout}>
-            Logout
-          </Button>
+          <IconButton
+            size="large"
+            aria-label="account of current user"
+            aria-controls="menu-appbar"
+            aria-haspopup="true"
+            onClick={handleMenu}
+            color="inherit"
+          >
+            <AccountCircle />
+          </IconButton>
+          <Menu
+            id="menu-appbar"
+            anchorEl={anchorEl}
+            anchorOrigin={{
+              vertical: 'top',
+              horizontal: 'right',
+            }}
+            keepMounted
+            transformOrigin={{
+              vertical: 'top',
+              horizontal: 'right',
+            }}
+            open={Boolean(anchorEl)}
+            onClose={handleClose}
+          >
+            <MenuItem onClick={goToProfile}>Profile</MenuItem>
+            <MenuItem onClick={handleLogout}>Logout</MenuItem>
+          </Menu>
         </Box>
       </Toolbar>
     </AppBar>

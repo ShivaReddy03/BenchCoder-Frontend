@@ -10,6 +10,8 @@ import Login from './components/Auth/Login'
 import Register from './components/Auth/Register'
 import Dashboard from './pages/Dashboard'
 import ProblemDetail from './pages/ProblemDetail'
+import SubmissionDetail from './pages/SubmissionDetail'
+import Profile from './pages/Profile'
 import Navbar from './components/Layout/Navbar'
 
 const theme = createTheme({
@@ -26,7 +28,7 @@ const theme = createTheme({
 
 function App() {
   const dispatch = useDispatch()
-  const { isAuthenticated, user } = useSelector((state) => state.auth) // Get user from state
+  const { isAuthenticated, user } = useSelector((state) => state.auth)
   
   useEffect(() => {
     // Try to fetch user profile if token exists but we don't have user data
@@ -34,11 +36,8 @@ function App() {
     if (token && !user) {
       dispatch(fetchProfile())
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [dispatch]) // Remove user from dependency array
-  // We only want this to run once on component mount
-  
-  
+  }, [dispatch])
+
   return (
     <ThemeProvider theme={theme}>
       <CssBaseline />
@@ -60,6 +59,22 @@ function App() {
             element={
               <ProtectedRoute>
                 <ProblemDetail />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/submission/:id"
+            element={
+              <ProtectedRoute>
+                <SubmissionDetail />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/profile"
+            element={
+              <ProtectedRoute>
+                <Profile />
               </ProtectedRoute>
             }
           />
