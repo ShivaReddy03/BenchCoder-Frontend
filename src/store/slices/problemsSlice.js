@@ -25,6 +25,43 @@ export const fetchProblem = createAsyncThunk(
   }
 )
 
+export const createProblem = createAsyncThunk(
+  'problems/createProblem',
+  async (problemData, { rejectWithValue }) => {
+    try {
+      const response = await api.post('/problems/', problemData)
+      return response.data
+    } catch (error) {
+      return rejectWithValue(error.response.data)
+    }
+  }
+)
+
+export const updateProblem = createAsyncThunk(
+  'problems/updateProblem',
+  async ({ id, ...problemData }, { rejectWithValue }) => {
+    try {
+      const response = await api.put(`/problems/${id}/`, problemData)
+      return response.data
+    } catch (error) {
+      return rejectWithValue(error.response.data)
+    }
+  }
+)
+
+export const deleteProblem = createAsyncThunk(
+  'problems/deleteProblem',
+  async (id, { rejectWithValue }) => {
+    try {
+      await api.delete(`/problems/${id}/`)
+      return id
+    } catch (error) {
+      return rejectWithValue(error.response.data)
+    }
+  }
+)
+
+
 const problemsSlice = createSlice({
   name: 'problems',
   initialState: {
@@ -68,6 +105,18 @@ const problemsSlice = createSlice({
       .addCase(fetchProblem.rejected, (state, action) => {
         state.loading = false
         state.error = action.payload
+      })
+      .addCase(createProblem.fulfilled, (state, action) => {
+        state.problems.push(action.payload)
+      })
+      .addCase(updateProblem.fulfilled, (state, action) => {
+        const index = state.problems.findIndex(p => p.id === action.payload.id)
+        if (index !== -1) {
+          state.problems[index] = action.payload
+        }
+      })
+      .addCase(deleteProblem.fulfilled, (state, action) => {
+        state.problems = state.problems.filter(p => p.id !== action.payload)
       })
   },
 })
