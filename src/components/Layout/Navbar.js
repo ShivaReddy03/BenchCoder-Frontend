@@ -83,6 +83,12 @@ const Navbar = () => {
             open={Boolean(anchorEl)}
             onClose={handleClose}
           >
+            <MenuItem onClick={() => { navigate('/admin'); handleClose(); }}>
+              Admin Dashboard
+            </MenuItem>
+            <MenuItem onClick={() => { navigate('/leaderboard'); handleClose(); }}>
+              Leaderboard
+            </MenuItem>
             <MenuItem onClick={goToProfile}>Profile</MenuItem>
             <MenuItem onClick={handleLogout}>Logout</MenuItem>
           </Menu>

@@ -13,6 +13,8 @@ import ProblemDetail from './pages/ProblemDetail'
 import SubmissionDetail from './pages/SubmissionDetail'
 import Profile from './pages/Profile'
 import Navbar from './components/Layout/Navbar'
+import AdminDashboard from './pages/AdminDashboard'
+import Leaderboard from './pages/Leaderboard'
 
 const theme = createTheme({
   palette: {
@@ -75,6 +77,22 @@ function App() {
             element={
               <ProtectedRoute>
                 <Profile />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/admin"
+            element={
+              <ProtectedRoute>
+                <AdminDashboard />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/leaderboard"
+            element={
+              <ProtectedRoute>
+                <Leaderboard />
               </ProtectedRoute>
             }
           />
