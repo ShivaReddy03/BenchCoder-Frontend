@@ -13,8 +13,9 @@ import {
 } from '@mui/material'
 import AccountCircle from '@mui/icons-material/AccountCircle'
 import { logout } from '../../store/slices/authSlice'
+import ThemeToggle from './ThemeToggle'
 
-const Navbar = () => {
+const Navbar = ({ darkMode, toggleDarkMode }) => {
   const dispatch = useDispatch()
   const navigate = useNavigate()
   const { user } = useSelector((state) => state.auth)
@@ -54,7 +55,8 @@ const Navbar = () => {
         >
           BenchCoder
         </Typography>
-        <Box>
+        <Box sx={{ display: 'flex', alignItems: 'center' }}>
+          <ThemeToggle darkMode={darkMode} toggleDarkMode={toggleDarkMode} />
           <Button color="inherit" sx={{ mr: 2 }}>
             {user?.username}
           </Button>

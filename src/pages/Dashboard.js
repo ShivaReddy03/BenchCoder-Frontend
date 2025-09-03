@@ -13,6 +13,7 @@ import { fetchSubmissions } from '../store/slices/submissionsSlice'
 import ProblemList from '../components/Problems/ProblemList'
 import UserStats from '../components/User/UserStats'
 import SubmissionsList from '../components/Submissions/SubmissionsList'
+import LoadingSpinner from '../components/Common/LoadingSpinner'
 
 const Dashboard = () => {
   const dispatch = useDispatch()
