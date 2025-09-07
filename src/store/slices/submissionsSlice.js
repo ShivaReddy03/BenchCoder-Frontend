@@ -64,6 +64,18 @@ const submissionsSlice = createSlice({
     clearError: (state) => {
       state.error = null
     },
+    updateSubmission: (state, action) => {
+      const updatedSubmission = action.payload
+      // Update in submissions list
+      const index = state.submissions.findIndex(s => s.id === updatedSubmission.id)
+      if (index !== -1) {
+        state.submissions[index] = updatedSubmission
+      }
+      // Update current submission if it's the one being viewed
+      if (state.currentSubmission && state.currentSubmission.id === updatedSubmission.id) {
+        state.currentSubmission = updatedSubmission
+      }
+    },
   },
   extraReducers: (builder) => {
     builder
@@ -113,5 +125,5 @@ const submissionsSlice = createSlice({
   },
 })
 
-export const { clearCurrentSubmission, clearError } = submissionsSlice.actions
+export const { clearCurrentSubmission, clearError, updateSubmission } = submissionsSlice.actions
 export default submissionsSlice.reducer

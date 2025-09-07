@@ -12,8 +12,10 @@ import {
   CircularProgress,
   Paper,
   Typography,
+  useTheme
 } from '@mui/material'
 import { submitCode } from '../../store/slices/submissionsSlice'
+import { useNotification } from '../../contexts/NotificationContext'
 
 const CodeEditor = ({ problemId }) => {
   const [code, setCode] = useState('// Write your code here\n')
@@ -21,10 +23,14 @@ const CodeEditor = ({ problemId }) => {
   const [message, setMessage] = useState(null)
   const dispatch = useDispatch()
   const { loading } = useSelector((state) => state.submissions)
+  const theme = useTheme()
+  const showNotification = useNotification()
 
   const handleEditorChange = (value) => {
     setCode(value)
   }
+
+   const editorTheme = theme.palette.mode === 'dark' ? 'vs-dark' : 'light'
 
   const handleSubmit = () => {
     if (!code.trim()) {
@@ -85,6 +91,7 @@ const CodeEditor = ({ problemId }) => {
           height="400px"
           language={language}
           value={code}
+          theme={editorTheme}
           onChange={handleEditorChange}
           options={{
             minimap: { enabled: false },
