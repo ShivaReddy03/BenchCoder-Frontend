@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { submissionService, Submission } from '@/services/submissionService';
+import { submissionService, ApiSubmission } from '@/services/submissionService';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -8,7 +8,7 @@ import { Loader2, Code2, Clock, CheckCircle, XCircle, AlertCircle } from 'lucide
 import { toast } from '@/hooks/use-toast';
 
 export default function Submissions() {
-  const [submissions, setSubmissions] = useState<Submission[]>([]);
+  const [submissions, setSubmissions] = useState<ApiSubmission[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -17,6 +17,7 @@ export default function Submissions() {
 
   const loadSubmissions = async () => {
     try {
+      // Assuming submissionService is updated to return ApiSubmission[]
       const data = await submissionService.listSubmissions();
       setSubmissions(data);
     } catch (error) {
@@ -30,36 +31,77 @@ export default function Submissions() {
     }
   };
 
-  const getStatusIcon = (status?: string) => {
-    switch (status) {
-      case 'accepted':
-        return <CheckCircle className="w-5 h-5 text-success" />;
-      case 'wrong_answer':
-      case 'error':
-        return <XCircle className="w-5 h-5 text-destructive" />;
-      case 'pending':
-        return <Clock className="w-5 h-5 text-warning animate-pulse" />;
+  const getStatusIcon = (verdict: string) => {
+    switch (verdict) {
+      case 'AC':
+        return <CheckCircle className="w-5 h-5 text-green-600" />;
+      case 'WA':
+      case 'TLE':
+      case 'MLE':
+      case 'RE':
+      case 'CE':
+      case 'PE':
+      case 'OT':
+        return <XCircle className="w-5 h-5 text-red-600" />;
+      case 'P':
+        return <Clock className="w-5 h-5 text-yellow-600 animate-pulse" />;
       default:
-        return <AlertCircle className="w-5 h-5 text-muted-foreground" />;
+        return <AlertCircle className="w-5 h-5 text-gray-400" />;
     }
   };
 
-  const getStatusColor = (status?: string) => {
-    switch (status) {
-      case 'accepted':
-        return 'bg-success text-success-foreground';
-      case 'wrong_answer':
-      case 'error':
-        return 'bg-destructive text-destructive-foreground';
-      case 'pending':
-        return 'bg-warning text-warning-foreground';
+  const getStatusColor = (verdict: string) => {
+    switch (verdict) {
+      case 'AC':
+        return 'bg-green-100 text-green-800 border-green-200';
+      case 'WA':
+        return 'bg-red-100 text-red-800 border-red-200';
+      case 'TLE':
+        return 'bg-orange-100 text-orange-800 border-orange-200';
+      case 'MLE':
+        return 'bg-purple-100 text-purple-800 border-purple-200';
+      case 'RE':
+      case 'CE':
+        return 'bg-red-100 text-red-800 border-red-200';
+      case 'PE':
+      case 'OT':
+        return 'bg-blue-100 text-blue-800 border-blue-200';
+      case 'P':
+        return 'bg-yellow-100 text-yellow-800 border-yellow-200 animate-pulse';
       default:
-        return 'bg-muted text-muted-foreground';
+        return 'bg-gray-100 text-gray-800 border-gray-200';
     }
   };
 
-  const formatDate = (dateString?: string) => {
-    if (!dateString) return 'Unknown';
+  const getStatusText = (verdict: string) => {
+    const verdictMap: { [key: string]: string } = {
+      'AC': 'Accepted',
+      'WA': 'Wrong Answer',
+      'TLE': 'Time Limit Exceeded',
+      'MLE': 'Memory Limit Exceeded',
+      'RE': 'Runtime Error',
+      'CE': 'Compilation Error',
+      'PE': 'Presentation Error',
+      'OT': 'Other',
+      'P': 'Pending'
+    };
+    return verdictMap[verdict] || verdict;
+  };
+
+  const getDifficultyColor = (difficulty: string) => {
+    switch (difficulty.toLowerCase()) {
+      case 'easy':
+        return 'bg-green-100 text-green-800 border-green-200';
+      case 'medium':
+        return 'bg-yellow-100 text-yellow-800 border-yellow-200';
+      case 'hard':
+        return 'bg-red-100 text-red-800 border-red-200';
+      default:
+        return 'bg-gray-100 text-gray-800 border-gray-200';
+    }
+  };
+
+  const formatDate = (dateString: string) => {
     return new Date(dateString).toLocaleString();
   };
 
@@ -99,57 +141,57 @@ export default function Submissions() {
               <CardHeader>
                 <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                   <div className="flex items-center gap-3">
-                    {getStatusIcon(submission.status)}
+                    {getStatusIcon(submission.verdict)}
                     <div>
-                      <CardTitle>Problem #{submission.problem}</CardTitle>
+                      <CardTitle className="text-lg">
+                        {submission.problem_title}
+                      </CardTitle>
                       <CardDescription>
-                        Submitted on {formatDate(submission.created_at)}
+                        Submitted on {formatDate(submission.submitted_at)}
                       </CardDescription>
                     </div>
                   </div>
                   <div className="flex flex-wrap items-center gap-2">
-                    <Badge className={getStatusColor(submission.status)}>
-                      {submission.status?.replace('_', ' ') || 'Unknown'}
+                    <Badge className={getStatusColor(submission.verdict)}>
+                      {getStatusText(submission.verdict)}
+                    </Badge>
+                    <Badge className={getDifficultyColor(submission.problem_difficulty)}>
+                      {submission.problem_difficulty}
                     </Badge>
                     <Badge variant="outline">{submission.language}</Badge>
-                    {submission.score !== undefined && (
-                      <Badge className="bg-primary text-primary-foreground">
-                        Score: {submission.score}
+                    {submission.execution_time !== null && (
+                      <Badge variant="secondary" className="bg-blue-100 text-blue-800">
+                        {submission.execution_time}ms
                       </Badge>
                     )}
                   </div>
                 </div>
               </CardHeader>
               <CardContent>
-                <div className="space-y-4">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
                   <div>
-                    <h4 className="text-sm font-medium mb-2">Code:</h4>
-                    <pre className="bg-muted p-4 rounded-lg overflow-x-auto text-sm">
-                      <code>{submission.code}</code>
-                    </pre>
+                    <span className="font-medium">User:</span>{' '}
+                    <span className="text-muted-foreground">{submission.user_username}</span>
                   </div>
-                  {submission.output && (
-                    <div>
-                      <h4 className="text-sm font-medium mb-2">Output:</h4>
-                      <pre className="bg-muted p-4 rounded-lg overflow-x-auto text-sm">
-                        <code>{submission.output}</code>
-                      </pre>
-                    </div>
-                  )}
-                  {submission.error_message && (
-                    <div>
-                      <h4 className="text-sm font-medium mb-2 text-destructive">Error:</h4>
-                      <pre className="bg-destructive/10 p-4 rounded-lg overflow-x-auto text-sm text-destructive">
-                        <code>{submission.error_message}</code>
-                      </pre>
-                    </div>
-                  )}
-                  {submission.execution_time !== undefined && (
-                    <p className="text-sm text-muted-foreground">
-                      Execution time: {submission.execution_time}ms
-                    </p>
-                  )}
+                  <div>
+                    <span className="font-medium">Submission ID:</span>{' '}
+                    <span className="text-muted-foreground">#{submission.id}</span>
+                  </div>
+                  <div>
+                    <span className="font-medium">Language:</span>{' '}
+                    <span className="text-muted-foreground">{submission.language}</span>
+                  </div>
+                  <div>
+                    <span className="font-medium">Difficulty:</span>{' '}
+                    <span className="text-muted-foreground capitalize">
+                      {submission.problem_difficulty}
+                    </span>
+                  </div>
                 </div>
+                
+                {/* Note: Since the API response doesn't include code, output, or error_message,
+                    these sections have been removed. If you need to display code, you would
+                    need to fetch it separately using the submission ID */}
               </CardContent>
             </Card>
           ))}

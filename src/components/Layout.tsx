@@ -19,10 +19,12 @@ export const Layout = ({ children }: { children: React.ReactNode }) => {
       <header className="border-b border-border bg-card/50 backdrop-blur-sm sticky top-0 z-50">
         <div className="container mx-auto px-4 h-16 flex items-center justify-between">
           <Link to="/" className="flex items-center gap-2 group">
-            <div className="w-10 h-10 rounded-lg bg-gradient-primary flex items-center justify-center shadow-glow">
-              <Code2 className="w-6 h-6 text-primary-foreground" />
+            <div className="relative w-10 h-10 rounded-lg bg-gradient-to-br from-blue-600 to-purple-600 flex items-center justify-center shadow-lg shadow-blue-500/50 transform group-hover:scale-105 transition-all duration-300">
+              {/* Inner shadow for depth */}
+              <div className="absolute inset-0 rounded-lg bg-gradient-to-br from-transparent to-white/10"></div>
+              <Code2 className="w-6 h-6 text-white drop-shadow-sm" />
             </div>
-            <span className="text-2xl font-bold bg-gradient-primary bg-clip-text text-transparent">
+            <span className="text-2xl font-bold bg-gradient-to-r from-blue-600 via-purple-600 to-blue-600 bg-clip-text text-transparent bg-size-200 bg-pos-0 hover:bg-pos-100 transition-all duration-500">
               BenchCoder
             </span>
           </Link>

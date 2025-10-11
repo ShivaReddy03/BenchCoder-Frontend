@@ -14,6 +14,17 @@ export interface Submission {
   created_at?: string;
 }
 
+export interface ApiSubmission {
+  id: number;
+  problem_title: string;
+  problem_difficulty: string;
+  user_username: string;
+  language: string;
+  verdict: string;
+  execution_time: number | null;
+  submitted_at: string;
+}
+
 export interface CreateSubmissionData {
   problem: number;
   code: string;
@@ -32,7 +43,7 @@ export const submissionService = {
     return response.data;
   },
 
-  listSubmissions: async (): Promise<Submission[]> => {
+  listSubmissions: async (): Promise<ApiSubmission[]> => {
     const response = await api.get('/submissions/');
     return response.data;
   },

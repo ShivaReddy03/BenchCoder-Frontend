@@ -26,8 +26,9 @@ export const authService = {
 
   login: async (data: LoginData) => {
     const response = await api.post('/auth/login/', data);
-    if (response.data.token) {
-      localStorage.setItem('authToken', response.data.token);
+    console.log("Login response:", response.data);
+    if (response.data.access) {
+      localStorage.setItem('authToken', response.data.access);
     }
     return response.data;
   },
