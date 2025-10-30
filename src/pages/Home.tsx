@@ -93,7 +93,7 @@ export default function Home() {
                 >
                   <CardHeader>
                     <div className="w-12 h-12 rounded-lg bg-gradient-primary flex items-center justify-center mb-4">
-                      <Icon className="w-6 h-6 text-primary-foreground" />
+                      <Icon className="w-6 h-6 text-primary" />
                     </div>
                     <CardTitle>{feature.title}</CardTitle>
                     <CardDescription>{feature.description}</CardDescription>
