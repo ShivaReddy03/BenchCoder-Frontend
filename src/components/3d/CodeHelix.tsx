@@ -55,11 +55,9 @@ export function CodeHelix() {
   return (
     <group ref={groupRef}>
       {/* Connecting lines */}
-      <primitive object={new THREE.Line(lineGeometry, new THREE.LineBasicMaterial({ 
-        color: '#00d4ff', 
-        transparent: true, 
-        opacity: 0.3 
-      }))} />
+      <lineSegments geometry={lineGeometry}>
+        <lineBasicMaterial color="#00d4ff" transparent opacity={0.3} />
+      </lineSegments>
       
       {/* Code symbols */}
       {helixData.map((point, i) => (
