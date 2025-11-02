@@ -105,6 +105,22 @@ All colors MUST be HSL.
     box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.37);
   }
 
+  .glass-panel {
+    @apply bg-background/40 backdrop-blur-xl border-border/50;
+  }
+
+  .portal-float {
+    animation: float 6s ease-in-out infinite;
+  }
+
+  .auth-input:focus {
+    transform: translateY(-2px);
+  }
+
+  .shadow-glow-intense {
+    box-shadow: 0 0 30px hsl(var(--primary) / 0.5);
+  }
+
   .film-grain {
     position: relative;
   }
