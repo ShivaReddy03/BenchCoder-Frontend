@@ -98,14 +98,14 @@ export default function ProblemDetail() {
     }
   };
 
-  const getDifficultyVariant = (difficulty: string) => {
+  const getDifficultyColor = (difficulty: string) => {
     switch (difficulty.toLowerCase()) {
       case 'easy':
-        return 'bg-success/10 text-success border-success/20';
+        return 'bg-difficulty-easy text-success-foreground';
       case 'medium':
-        return 'bg-warning/10 text-warning border-warning/20';
+        return 'bg-difficulty-medium text-warning-foreground';
       case 'hard':
-        return 'bg-destructive/10 text-destructive border-destructive/20';
+        return 'bg-difficulty-hard text-destructive-foreground';
       default:
         return 'bg-muted text-muted-foreground';
     }
@@ -113,8 +113,8 @@ export default function ProblemDetail() {
 
   if (loading) {
     return (
-      <div className="min-h-[50vh] flex items-center justify-center">
-        <Loader2 className="w-6 h-6 animate-spin text-primary" />
+      <div className="min-h-screen flex items-center justify-center">
+        <Loader2 className="w-8 h-8 animate-spin text-primary" />
       </div>
     );
   }
@@ -122,11 +122,11 @@ export default function ProblemDetail() {
   if (!problem) return null;
 
   return (
-    <div className="container mx-auto py-8 animate-fade-in">
+    <div className="container mx-auto px-4 py-8 animate-fade-in">
       <Button
-        variant="ghost"
+        variant="outline"
         onClick={() => navigate('/problems')}
-        className="mb-6 -ml-2"
+        className="mb-6"
       >
         <ArrowLeft className="w-4 h-4 mr-2" />
         Back to Problems
@@ -134,11 +134,11 @@ export default function ProblemDetail() {
 
       <div className="grid gap-6 lg:grid-cols-2">
         {/* Problem Description */}
-        <Card className="border-border h-fit">
+        <Card className="shadow-card h-fit">
           <CardHeader>
-            <div className="flex items-start justify-between gap-4 mb-2">
-              <CardTitle className="text-xl">{problem.title}</CardTitle>
-              <Badge variant="outline" className={getDifficultyVariant(problem.difficulty)}>
+            <div className="flex items-start justify-between mb-2">
+              <CardTitle className="text-2xl">{problem.title}</CardTitle>
+              <Badge className={getDifficultyColor(problem.difficulty)}>
                 {problem.difficulty}
               </Badge>
             </div>
@@ -148,50 +148,54 @@ export default function ProblemDetail() {
             </div>
           </CardHeader>
           <CardContent>
-            <p className="text-foreground whitespace-pre-wrap leading-relaxed">{problem.description}</p>
+            <div className="prose prose-invert max-w-none">
+              <p className="text-foreground whitespace-pre-wrap">{problem.description}</p>
+            </div>
           </CardContent>
         </Card>
 
         {/* Code Editor */}
-        <Card className="border-border">
-          <CardHeader>
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-2">
-                <Code2 className="w-5 h-5 text-primary" />
-                <CardTitle className="text-lg">Code Editor</CardTitle>
+        <div className="space-y-4">
+          <Card className="shadow-card">
+            <CardHeader>
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <Code2 className="w-5 h-5 text-primary" />
+                  <CardTitle>Code Editor</CardTitle>
+                </div>
+                <Select value={language} onValueChange={handleLanguageChange}>
+                  <SelectTrigger className="w-[140px]">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="python">Python</SelectItem>
+                    <SelectItem value="javascript">JavaScript</SelectItem>
+                    <SelectItem value="java">Java</SelectItem>
+                  </SelectContent>
+                </Select>
               </div>
-              <Select value={language} onValueChange={handleLanguageChange}>
-                <SelectTrigger className="w-[130px]">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="python">Python</SelectItem>
-                  <SelectItem value="javascript">JavaScript</SelectItem>
-                  <SelectItem value="java">Java</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-            <CardDescription>Write your solution below</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <Textarea
-              value={code}
-              onChange={(e) => setCode(e.target.value)}
-              className="font-mono min-h-[350px] bg-muted/30 resize-none"
-              placeholder="Write your code here..."
-              disabled={submitting}
-            />
-            <Button
-              onClick={handleSubmit}
-              disabled={submitting}
-              className="w-full mt-4"
-            >
-              {submitting && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
-              {submitting ? 'Submitting...' : 'Submit Solution'}
-              {!submitting && <Send className="w-4 h-4 ml-2" />}
-            </Button>
-          </CardContent>
-        </Card>
+              <CardDescription>Write your solution below</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <Textarea
+                value={code}
+                onChange={(e) => setCode(e.target.value)}
+                className="font-mono min-h-[400px] bg-muted/50"
+                placeholder="Write your code here..."
+                disabled={submitting}
+              />
+              <Button
+                onClick={handleSubmit}
+                disabled={submitting}
+                className="w-full mt-4 gradient-primary"
+              >
+                {submitting && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
+                {submitting ? 'Submitting...' : 'Submit Solution'}
+                {!submitting && <Send className="w-4 h-4 ml-2" />}
+              </Button>
+            </CardContent>
+          </Card>
+        </div>
       </div>
     </div>
   );

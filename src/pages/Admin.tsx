@@ -95,26 +95,26 @@ export default function Admin() {
   };
 
   return (
-    <div className="container mx-auto py-8 animate-fade-in">
+    <div className="container mx-auto px-4 py-8 animate-fade-in">
       <div className="mb-8">
-        <h1 className="text-3xl font-bold mb-2 text-foreground">Admin Panel</h1>
+        <h1 className="text-4xl font-bold mb-2">Admin Panel</h1>
         <p className="text-muted-foreground">
           Manage problems and test cases
         </p>
       </div>
 
-      <Tabs defaultValue="problem" className="w-full max-w-2xl">
-        <TabsList className="grid w-full grid-cols-2">
+      <Tabs defaultValue="problem" className="w-full">
+        <TabsList className="grid w-full max-w-md grid-cols-2">
           <TabsTrigger value="problem">Create Problem</TabsTrigger>
           <TabsTrigger value="testcase">Add Test Case</TabsTrigger>
         </TabsList>
 
         <TabsContent value="problem" className="mt-6">
-          <Card className="border-border">
+          <Card className="shadow-card max-w-2xl">
             <CardHeader>
               <div className="flex items-center gap-2">
                 <Plus className="w-5 h-5 text-primary" />
-                <CardTitle>New Problem</CardTitle>
+                <CardTitle>Create New Problem</CardTitle>
               </div>
               <CardDescription>
                 Add a new coding problem to the platform
@@ -123,7 +123,7 @@ export default function Admin() {
             <CardContent>
               <form onSubmit={handleCreateProblem} className="space-y-4">
                 <div className="space-y-2">
-                  <Label htmlFor="title">Title</Label>
+                  <Label htmlFor="title">Problem Title</Label>
                   <Input
                     id="title"
                     placeholder="e.g., Two Sum"
@@ -138,8 +138,8 @@ export default function Admin() {
                   <Label htmlFor="description">Description</Label>
                   <Textarea
                     id="description"
-                    placeholder="Describe the problem..."
-                    className="min-h-[120px] resize-none"
+                    placeholder="Describe the problem in detail..."
+                    className="min-h-[150px]"
                     value={problemData.description}
                     onChange={(e) => setProblemData({ ...problemData, description: e.target.value })}
                     required
@@ -147,7 +147,7 @@ export default function Admin() {
                   />
                 </div>
 
-                <div className="grid grid-cols-2 gap-4">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <div className="space-y-2">
                     <Label htmlFor="difficulty">Difficulty</Label>
                     <Select
@@ -184,7 +184,7 @@ export default function Admin() {
 
                 <Button
                   type="submit"
-                  className="w-full"
+                  className="w-full gradient-primary"
                   disabled={loading}
                 >
                   {loading && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
@@ -196,11 +196,11 @@ export default function Admin() {
         </TabsContent>
 
         <TabsContent value="testcase" className="mt-6">
-          <Card className="border-border">
+          <Card className="shadow-card max-w-2xl">
             <CardHeader>
               <div className="flex items-center gap-2">
                 <FileText className="w-5 h-5 text-primary" />
-                <CardTitle>New Test Case</CardTitle>
+                <CardTitle>Add Test Case</CardTitle>
               </div>
               <CardDescription>
                 Add a test case to an existing problem
@@ -226,7 +226,6 @@ export default function Admin() {
                   <Textarea
                     id="input"
                     placeholder="Test case input..."
-                    className="resize-none"
                     value={testCaseData.input}
                     onChange={(e) => setTestCaseData({ ...testCaseData, input: e.target.value })}
                     required
@@ -239,7 +238,6 @@ export default function Admin() {
                   <Textarea
                     id="expected_output"
                     placeholder="Expected output..."
-                    className="resize-none"
                     value={testCaseData.expected_output}
                     onChange={(e) => setTestCaseData({ ...testCaseData, expected_output: e.target.value })}
                     required
@@ -268,7 +266,7 @@ export default function Admin() {
 
                 <Button
                   type="submit"
-                  className="w-full"
+                  className="w-full gradient-primary"
                   disabled={loading}
                 >
                   {loading && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}

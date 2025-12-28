@@ -50,14 +50,14 @@ export default function Problems() {
     }
   };
 
-  const getDifficultyVariant = (difficulty: string) => {
+  const getDifficultyColor = (difficulty: string) => {
     switch (difficulty.toLowerCase()) {
       case 'easy':
-        return 'bg-success/10 text-success border-success/20';
+        return 'bg-difficulty-easy text-success-foreground';
       case 'medium':
-        return 'bg-warning/10 text-warning border-warning/20';
+        return 'bg-difficulty-medium text-warning-foreground';
       case 'hard':
-        return 'bg-destructive/10 text-destructive border-destructive/20';
+        return 'bg-difficulty-hard text-destructive-foreground';
       default:
         return 'bg-muted text-muted-foreground';
     }
@@ -72,6 +72,7 @@ export default function Problems() {
     setCurrentPage(1);
   };
 
+  // Generate page numbers for pagination
   const generatePageNumbers = () => {
     const pageNumbers: (number | string)[] = [];
     if (totalPages <= 5) {
@@ -106,56 +107,59 @@ export default function Problems() {
 
   if (loading) {
     return (
-      <div className="min-h-[50vh] flex items-center justify-center">
-        <Loader2 className="w-6 h-6 animate-spin text-primary" />
+      <div className="min-h-screen flex items-center justify-center">
+        <Loader2 className="w-8 h-8 animate-spin text-primary" />
       </div>
     );
   }
 
   const pageNumbers = generatePageNumbers();
+
   const isFiltered = searchTerm || selectedDifficulty !== 'all';
 
   return (
-    <div className="container mx-auto py-8 animate-fade-in">
+    <div className="container mx-auto px-4 py-8 animate-fade-in">
       <div className="mb-8">
-        <h1 className="text-3xl font-bold mb-2 text-foreground">Problems</h1>
+        <h1 className="text-4xl font-bold mb-2">Coding Problems</h1>
         <p className="text-muted-foreground">
-          Choose a problem and start coding
+          Choose a problem and start coding. Test your skills and improve with each challenge.
         </p>
       </div>
 
       <div className="flex flex-col sm:flex-row gap-4 mb-6">
-        <div className="flex-1 max-w-md">
+        <div className="max-w-md flex-1">
           <Input
-            placeholder="Search problems..."
+            placeholder="Search problems by title..."
             value={searchInput}
             onChange={(e) => setSearchInput(e.target.value)}
           />
         </div>
-        <Select value={selectedDifficulty} onValueChange={handleDifficultyChange}>
-          <SelectTrigger className="w-[160px]">
-            <SelectValue placeholder="Difficulty" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="all">All</SelectItem>
-            <SelectItem value="easy">Easy</SelectItem>
-            <SelectItem value="medium">Medium</SelectItem>
-            <SelectItem value="hard">Hard</SelectItem>
-          </SelectContent>
-        </Select>
+        <div className="w-full sm:w-auto">
+          <Select value={selectedDifficulty} onValueChange={handleDifficultyChange}>
+            <SelectTrigger className="w-[180px]">
+              <SelectValue placeholder="Filter by difficulty" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">All Difficulties</SelectItem>
+              <SelectItem value="easy">Easy</SelectItem>
+              <SelectItem value="medium">Medium</SelectItem>
+              <SelectItem value="hard">Hard</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
       </div>
 
       {problems.length === 0 ? (
-        <Card className="border-border">
-          <CardContent className="flex flex-col items-center justify-center py-16">
-            <Code2 className="w-10 h-10 text-muted-foreground mb-4" />
+        <Card className="shadow-card">
+          <CardContent className="flex flex-col items-center justify-center py-12">
+            <Code2 className="w-12 h-12 text-muted-foreground mb-4" />
             {isFiltered ? (
               <p className="text-muted-foreground text-center">
-                No problems found matching your criteria.
+                No problems found {searchTerm ? `for "${searchTerm}"` : ''} {selectedDifficulty !== 'all' ? `with difficulty "${selectedDifficulty}"` : ''}.
               </p>
             ) : (
               <p className="text-muted-foreground text-center">
-                No problems available yet.
+                No problems available yet. Check back soon!
               </p>
             )}
           </CardContent>
@@ -169,21 +173,21 @@ export default function Problems() {
                 to={`/problem/${problem.id}`}
                 className="group"
               >
-                <Card className="h-full border-border hover:border-primary/50 transition-colors">
-                  <CardHeader className="pb-3">
-                    <div className="flex items-start justify-between gap-2 mb-1">
-                      <CardTitle className="text-base group-hover:text-primary transition-colors line-clamp-1">
+                <Card className="h-full shadow-card hover:shadow-glow transition-all duration-300 hover:scale-105 border-border hover:border-primary/50">
+                  <CardHeader>
+                    <div className="flex items-start justify-between mb-2">
+                      <CardTitle className="group-hover:text-primary transition-colors">
                         {problem.title}
                       </CardTitle>
-                      <Badge variant="outline" className={getDifficultyVariant(problem.difficulty)}>
+                      <Badge className={getDifficultyColor(problem.difficulty)}>
                         {problem.difficulty}
                       </Badge>
                     </div>
-                    <CardDescription className="line-clamp-2 text-sm">
+                    <CardDescription className="line-clamp-2">
                       {problem.description}
                     </CardDescription>
                   </CardHeader>
-                  <CardContent className="pt-0">
+                  <CardContent>
                     <div className="flex items-center gap-2 text-sm text-muted-foreground">
                       <Trophy className="w-4 h-4 text-primary" />
                       <span>{problem.points} points</span>
