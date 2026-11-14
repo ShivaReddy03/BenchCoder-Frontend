@@ -1,48 +1,60 @@
-import axios from 'axios';
-import { BASE_URL, USE_MOCK_FALLBACK } from './endpoints';
-
-const api = axios.create({ baseURL: BASE_URL, headers: { 'Content-Type': 'application/json' }, timeout: 8000 });
-
-api.interceptors.request.use((config) => {
-  const token = localStorage.getItem('authToken');
-  if (token && !token.startsWith('mock-')) config.headers.Authorization = `Bearer ${token}`;
-  return config;
-});
-
-/** True when the error means "backend not there" (offline / 404) rather than a real API error. */
-export const isUnavailable = (err: unknown) => {
-  if (!axios.isAxiosError(err)) return false;
-  return !err.response || err.response.status === 404 || err.response.status >= 500;
-};
-
-/**
- * Call the real endpoint; if it's missing (null) or the backend is unavailable,
- * return sample data instead. Real validation errors (400/401/403) are rethrown.
- */
-export async function withFallback<T>(endpoint: unknown, call: () => Promise<T>, mock: () => T | Promise<T>): Promise<T> {
-  if (endpoint == null) return mock();
+import axios from "axios";
+import { BASE_URL } from "./endpoints";
+export const AUTH_EXPIRED = "benchcoder:auth-expired";
+export function tokenExpiry(token: string): number {
   try {
-    return await call();
-  } catch (err) {
-    if (USE_MOCK_FALLBACK && isUnavailable(err)) {
-      console.info('[api] using sample data:', (err as Error).message);
-      return mock();
-    }
-    throw err;
+    return (
+      JSON.parse(
+        atob(token.split(".")[1].replace(/-/g, "+").replace(/_/g, "/")),
+      ).exp * 1000 || 0
+    );
+  } catch {
+    return 0;
   }
 }
-
-export const errorMessage = (err: unknown, fallback = 'Something went wrong') => {
-  if (axios.isAxiosError(err)) {
-    const d = err.response?.data as Record<string, unknown> | undefined;
-    if (d) {
-      if (typeof d.detail === 'string') return d.detail;
-      if (typeof d.error === 'string') return d.error;
-      const first = Object.values(d)[0];
-      if (Array.isArray(first) && typeof first[0] === 'string') return first[0];
-    }
+export function clearSession() {
+  localStorage.removeItem("authToken");
+  window.dispatchEvent(new Event(AUTH_EXPIRED));
+}
+const api = axios.create({ baseURL: BASE_URL, timeout: 15000 });
+api.interceptors.request.use((config) => {
+  if (config.url === "/auth/login/" || config.url === "/auth/register/") {
+    config.headers.delete("Authorization");
+    return config;
   }
-  return fallback;
-};
-
+  const token = localStorage.getItem("authToken");
+  if (token && tokenExpiry(token) <= Date.now()) {
+    clearSession();
+    return Promise.reject(new Error("Session expired. Please sign in again."));
+  }
+  if (token) config.headers.Authorization = `Bearer ${token}`;
+  return config;
+});
+api.interceptors.response.use(
+  (response) => response,
+  (error) => {
+    if (error.response?.status === 401) clearSession();
+    return Promise.reject(error);
+  },
+);
+export function errorMessage(
+  error: unknown,
+  fallback = "Unable to complete request. Please try again.",
+) {
+  if (axios.isAxiosError(error)) {
+    const data = error.response?.data;
+    if (typeof data?.detail === "string") return data.detail;
+    if (typeof data?.error === "string") return data.error;
+    if (data && typeof data === "object")
+      return Object.entries(data)
+        .map(
+          ([key, value]) =>
+            `${key}: ${Array.isArray(value) ? value.join(" ") : String(value)}`,
+        )
+        .join(" ");
+    if (!error.response)
+      return "Cannot reach the server. Check your connection and try again.";
+  }
+  return error instanceof Error ? error.message : fallback;
+}
 export default api;

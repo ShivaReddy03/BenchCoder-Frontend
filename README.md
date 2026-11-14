@@ -1,73 +1,26 @@
-# Welcome to your Lovable project
+# BenchCoder frontend
 
-## Project info
+React/TypeScript/Vite interface for the sibling BenchCoder Django API.
 
-**URL**: https://lovable.dev/projects/45246be8-7aa4-423f-a2f1-d68d7f2b9830
+## Run locally
 
-## How can I edit this code?
+1. Start the backend stack using its README.
+2. Install dependencies: `npm ci`.
+3. Copy `.env.example` to `.env.local` and set `VITE_API_URL=http://127.0.0.1:8000/api`.
+4. Run `npm run dev` (port8080). If Windows reserves that port, use `npm run dev -- --host 127.0.0.1 --port 5173`.
+5. Register a normal account. Administrators are created using the backend's `createsuperuser` command.
 
-There are several ways of editing your application.
+## Workflows
 
-**Use Lovable**
+- Seven-day access-token authentication; expired sessions require sign-in.
+- Paginated problem browsing with search and difficulty filters.
+- Python/JavaScript CodeMirror editor with per-user local drafts.
+- Asynchronous sample runs and full submissions with bounded result polling.
+- Submission history, diagnostics, runtime, memory, and public sample results.
+- Staff-only problem/test-case management.
 
-Simply visit the [Lovable Project](https://lovable.dev/projects/45246be8-7aa4-423f-a2f1-d68d7f2b9830) and start prompting.
+All data comes from the API. There are no simulated verdicts, offline demo accounts, or AI/RAG features.
 
-Changes made via Lovable will be committed automatically to this repo.
+## Verify and deploy
 
-**Use your preferred IDE**
-
-If you want to work locally using your own IDE, you can clone this repo and push changes. Pushed changes will also be reflected in Lovable.
-
-The only requirement is having Node.js & npm installed - [install with nvm](https://github.com/nvm-sh/nvm#installing-and-updating)
-
-Follow these steps:
-
-```sh
-# Step 1: Clone the repository using the project's Git URL.
-git clone <YOUR_GIT_URL>
-
-# Step 2: Navigate to the project directory.
-cd <YOUR_PROJECT_NAME>
-
-# Step 3: Install the necessary dependencies.
-npm i
-
-# Step 4: Start the development server with auto-reloading and an instant preview.
-npm run dev
-```
-
-**Edit a file directly in GitHub**
-
-- Navigate to the desired file(s).
-- Click the "Edit" button (pencil icon) at the top right of the file view.
-- Make your changes and commit the changes.
-
-**Use GitHub Codespaces**
-
-- Navigate to the main page of your repository.
-- Click on the "Code" button (green button) near the top right.
-- Select the "Codespaces" tab.
-- Click on "New codespace" to launch a new Codespace environment.
-- Edit files directly within the Codespace and commit and push your changes once you're done.
-
-## What technologies are used for this project?
-
-This project is built with:
-
-- Vite
-- TypeScript
-- React
-- shadcn-ui
-- Tailwind CSS
-
-## How can I deploy this project?
-
-Simply open [Lovable](https://lovable.dev/projects/45246be8-7aa4-423f-a2f1-d68d7f2b9830) and click on Share -> Publish.
-
-## Can I connect a custom domain to my Lovable project?
-
-Yes, you can!
-
-To connect a domain, navigate to Project > Settings > Domains and click Connect Domain.
-
-Read more here: [Setting up a custom domain](https://docs.lovable.dev/features/custom-domain#custom-domain)
+Run `npm run build`, `npm run lint`, and `npx tsc --noEmit -p tsconfig.app.json`. Serve the generated `dist` directory with a fallback to `index.html` for client routes. Set the build-time API URL and configure the backend's CORS origins for your frontend deployment. See the backend integration/resilience smoke scripts for actual Redis/Celery/Docker tests.

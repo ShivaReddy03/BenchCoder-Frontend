@@ -13,6 +13,7 @@ import Register from "./pages/Register";
 import Problems from "./pages/Problems";
 import ProblemDetail from "./pages/ProblemDetail";
 import Submissions from "./pages/Submissions";
+import SubmissionDetail from "./pages/SubmissionDetail";
 import Admin from "./pages/Admin";
 import NotFound from "./pages/NotFound";
 
@@ -20,56 +21,64 @@ const queryClient = new QueryClient();
 
 const App = () => (
   <ThemeProvider attribute="class" defaultTheme="dark" enableSystem={false}>
-  <QueryClientProvider client={queryClient}>
-    <TooltipProvider>
-      <BrowserRouter>
-        <AuthProvider>
-          <Toaster />
-          <Sonner />
-          <Layout>
-            <Routes>
-              <Route path="/" element={<Home />} />
-              <Route path="/login" element={<Login />} />
-              <Route path="/register" element={<Register />} />
-              <Route
-                path="/problems"
-                element={
-                  <ProtectedRoute>
-                    <Problems />
-                  </ProtectedRoute>
-                }
-              />
-              <Route
-                path="/problem/:id"
-                element={
-                  <ProtectedRoute>
-                    <ProblemDetail />
-                  </ProtectedRoute>
-                }
-              />
-              <Route
-                path="/submissions"
-                element={
-                  <ProtectedRoute>
-                    <Submissions />
-                  </ProtectedRoute>
-                }
-              />
-              <Route
-                path="/admin"
-                element={
-                  <ProtectedRoute requireAdmin>
-                    <Admin />
-                  </ProtectedRoute>
-                }
-              />
-              <Route path="*" element={<NotFound />} />
-            </Routes>
-          </Layout>
-        </AuthProvider>
-      </BrowserRouter>
-    </TooltipProvider>
-  </QueryClientProvider>
+    <QueryClientProvider client={queryClient}>
+      <TooltipProvider>
+        <BrowserRouter>
+          <AuthProvider>
+            <Toaster />
+            <Sonner />
+            <Layout>
+              <Routes>
+                <Route path="/" element={<Home />} />
+                <Route path="/login" element={<Login />} />
+                <Route path="/register" element={<Register />} />
+                <Route
+                  path="/problems"
+                  element={
+                    <ProtectedRoute>
+                      <Problems />
+                    </ProtectedRoute>
+                  }
+                />
+                <Route
+                  path="/problem/:id"
+                  element={
+                    <ProtectedRoute>
+                      <ProblemDetail />
+                    </ProtectedRoute>
+                  }
+                />
+                <Route
+                  path="/submissions"
+                  element={
+                    <ProtectedRoute>
+                      <Submissions />
+                    </ProtectedRoute>
+                  }
+                />
+                <Route
+                  path="/admin"
+                  element={
+                    <ProtectedRoute requireAdmin>
+                      <Admin />
+                    </ProtectedRoute>
+                  }
+                />
+                <Route
+                  path="/submissions/:id"
+                  element={
+                    <ProtectedRoute>
+                      <SubmissionDetail />
+                    </ProtectedRoute>
+                  }
+                />
+                <Route path="*" element={<NotFound />} />
+              </Routes>
+            </Layout>
+          </AuthProvider>
+        </BrowserRouter>
+      </TooltipProvider>
+    </QueryClientProvider>
   </ThemeProvider>
 );
 

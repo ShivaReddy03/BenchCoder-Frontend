@@ -1,282 +1,374 @@
-import { useState } from 'react';
-import { problemService } from '@/services/problemService';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { Textarea } from '@/components/ui/textarea';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { toast } from '@/hooks/use-toast';
-import { Loader2, Plus, FileText } from 'lucide-react';
-
+import { FormEvent, useCallback, useEffect, useState } from "react";
+import {
+  problemService,
+  Problem,
+  TestCase,
+  CreateProblemData,
+} from "@/services/problemService";
+import { errorMessage } from "@/services/api";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
+const empty: CreateProblemData = {
+  title: "",
+  description: "",
+  difficulty: "easy",
+  points: 10,
+};
+const emptyCase = { input: "", expected_output: "", is_public: false };
 export default function Admin() {
-  const [problemData, setProblemData] = useState({
-    title: '',
-    description: '',
-    difficulty: 'easy' as 'easy' | 'medium' | 'hard',
-    points: 10,
-  });
-  const [testCaseData, setTestCaseData] = useState({
-    problemId: '',
-    input: '',
-    expected_output: '',
-    is_public: true,
-  });
-  const [loading, setLoading] = useState(false);
-
-  const handleCreateProblem = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setLoading(true);
-
+  const [rows, setRows] = useState<Problem[]>([]);
+  const [page, setPage] = useState(1);
+  const [pages, setPages] = useState(1);
+  const [selected, setSelected] = useState<number | null>(null);
+  const [form, setForm] = useState(empty);
+  const [cases, setCases] = useState<TestCase[]>([]);
+  const [caseId, setCaseId] = useState<number | null>(null);
+  const [test, setTest] = useState(emptyCase);
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState("");
+  const [notice, setNotice] = useState("");
+  const load = useCallback(async () => {
+    const d = await problemService.listProblems(page, 20);
+    setRows(d.results);
+    setPages(d.total_pages);
+  }, [page]);
+  useEffect(() => {
+    load().catch((e) => setError(errorMessage(e)));
+  }, [load]);
+  const action = async (fn: () => Promise<void>) => {
+    setBusy(true);
+    setError("");
+    setNotice("");
     try {
-      const problem = await problemService.createProblem(problemData);
-      toast({
-        title: 'Problem created!',
-        description: `${problem.title} has been created successfully`,
-      });
-      setProblemData({
-        title: '',
-        description: '',
-        difficulty: 'easy',
-        points: 10,
-      });
-    } catch (error: any) {
-      toast({
-        title: 'Failed to create problem',
-        description: error.response?.data?.message || 'Something went wrong',
-        variant: 'destructive',
-      });
+      await fn();
+    } catch (e) {
+      setError(errorMessage(e));
     } finally {
-      setLoading(false);
+      setBusy(false);
     }
   };
-
-  const handleAddTestCase = async (e: React.FormEvent) => {
+  const choose = (p: Problem) =>
+    action(async () => {
+      setSelected(p.id);
+      setForm({
+        title: p.title,
+        description: p.description,
+        difficulty: p.difficulty,
+        points: p.points,
+      });
+      setCases(await problemService.listTestCases(p.id));
+      setCaseId(null);
+      setTest(emptyCase);
+    });
+  const save = (e: FormEvent) => {
     e.preventDefault();
-    
-    if (!testCaseData.problemId) {
-      toast({
-        title: 'Invalid problem ID',
-        description: 'Please enter a valid problem ID',
-        variant: 'destructive',
+    action(async () => {
+      const p = selected
+        ? await problemService.updateProblem(selected, form)
+        : await problemService.createProblem(form);
+      setSelected(p.id);
+      setForm({
+        title: p.title,
+        description: p.description,
+        difficulty: p.difficulty,
+        points: p.points,
       });
-      return;
-    }
-
-    setLoading(true);
-
-    try {
-      await problemService.addTestCase(parseInt(testCaseData.problemId), {
-        problem: parseInt(testCaseData.problemId),
-        input: testCaseData.input,
-        expected_output: testCaseData.expected_output,
-        is_public: testCaseData.is_public,
-      });
-      toast({
-        title: 'Test case added!',
-        description: 'Test case has been added successfully',
-      });
-      setTestCaseData({
-        problemId: '',
-        input: '',
-        expected_output: '',
-        is_public: true,
-      });
-    } catch (error: any) {
-      toast({
-        title: 'Failed to add test case',
-        description: error.response?.data?.message || 'Something went wrong',
-        variant: 'destructive',
-      });
-    } finally {
-      setLoading(false);
-    }
+      setCases(await problemService.listTestCases(p.id));
+      await load();
+      setNotice("Problem saved.");
+    });
   };
-
+  const saveCase = (e: FormEvent) => {
+    e.preventDefault();
+    if (!selected) return;
+    action(async () => {
+      if (caseId) await problemService.updateTestCase(selected, caseId, test);
+      else await problemService.addTestCase(selected, test);
+      setCases(await problemService.listTestCases(selected));
+      setCaseId(null);
+      setTest(emptyCase);
+      setNotice("Test case saved.");
+    });
+  };
   return (
-    <div className="container mx-auto px-4 py-8 animate-fade-in">
-      <div className="mb-8">
-        <h1 className="text-4xl font-bold mb-2">Admin Panel</h1>
-        <p className="text-muted-foreground">
-          Manage problems and test cases
+    <div className="mx-auto max-w-7xl px-4 py-8">
+      <h1 className="text-2xl font-semibold">Problem management</h1>
+      <p className="mt-2 text-sm text-muted-foreground">
+        Manage problems, public samples, and private evaluation tests.
+      </p>
+      {error && (
+        <p role="alert" className="my-4 text-destructive">
+          {error}
         </p>
-      </div>
-
-      <Tabs defaultValue="problem" className="w-full">
-        <TabsList className="grid w-full max-w-md grid-cols-2">
-          <TabsTrigger value="problem">Create Problem</TabsTrigger>
-          <TabsTrigger value="testcase">Add Test Case</TabsTrigger>
-        </TabsList>
-
-        <TabsContent value="problem" className="mt-6">
-          <Card className="shadow-card max-w-2xl">
-            <CardHeader>
-              <div className="flex items-center gap-2">
-                <Plus className="w-5 h-5 text-primary" />
-                <CardTitle>Create New Problem</CardTitle>
-              </div>
-              <CardDescription>
-                Add a new coding problem to the platform
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <form onSubmit={handleCreateProblem} className="space-y-4">
-                <div className="space-y-2">
-                  <Label htmlFor="title">Problem Title</Label>
-                  <Input
-                    id="title"
-                    placeholder="e.g., Two Sum"
-                    value={problemData.title}
-                    onChange={(e) => setProblemData({ ...problemData, title: e.target.value })}
-                    required
-                    disabled={loading}
-                  />
-                </div>
-
-                <div className="space-y-2">
-                  <Label htmlFor="description">Description</Label>
-                  <Textarea
-                    id="description"
-                    placeholder="Describe the problem in detail..."
-                    className="min-h-[150px]"
-                    value={problemData.description}
-                    onChange={(e) => setProblemData({ ...problemData, description: e.target.value })}
-                    required
-                    disabled={loading}
-                  />
-                </div>
-
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                  <div className="space-y-2">
-                    <Label htmlFor="difficulty">Difficulty</Label>
-                    <Select
-                      value={problemData.difficulty}
-                      onValueChange={(value: 'easy' | 'medium' | 'hard') =>
-                        setProblemData({ ...problemData, difficulty: value })
-                      }
-                      disabled={loading}
+      )}
+      {notice && (
+        <p role="status" className="my-4 text-success">
+          {notice}
+        </p>
+      )}
+      <fieldset
+        disabled={busy}
+        className="mt-6 grid min-w-0 gap-6 lg:grid-cols-[280px_1fr]"
+      >
+        <aside className="space-y-3">
+          <Button
+            variant="outline"
+            className="w-full"
+            onClick={() => {
+              setSelected(null);
+              setForm(empty);
+              setCases([]);
+              setCaseId(null);
+              setTest(emptyCase);
+              setNotice("");
+            }}
+          >
+            New problem
+          </Button>
+          <div className="rounded border bg-card">
+            {rows.map((p) => (
+              <button
+                key={p.id}
+                className={`block w-full border-b p-3 text-left text-sm last:border-0 hover:bg-muted ${selected === p.id ? "bg-muted" : ""}`}
+                onClick={() => choose(p)}
+              >
+                {p.id}. {p.title}
+              </button>
+            ))}
+            {!rows.length && (
+              <p className="p-4 text-sm text-muted-foreground">
+                No problems yet.
+              </p>
+            )}
+          </div>
+          <div className="flex items-center justify-between">
+            <Button
+              variant="outline"
+              disabled={busy || page <= 1}
+              onClick={() => setPage((p) => p - 1)}
+            >
+              Prev
+            </Button>
+            <span className="text-xs">
+              {page} / {Math.max(pages, 1)}
+            </span>
+            <Button
+              variant="outline"
+              disabled={busy || page >= pages}
+              onClick={() => setPage((p) => p + 1)}
+            >
+              Next
+            </Button>
+          </div>
+        </aside>
+        <div className="min-w-0 space-y-6">
+          <form
+            onSubmit={save}
+            className="space-y-4 rounded border bg-card p-5"
+          >
+            <h2 className="font-semibold">
+              {selected ? `Edit problem #${selected}` : "Create problem"}
+            </h2>
+            <label className="block space-y-2 text-sm">
+              <span>Title</span>
+              <Input
+                required
+                maxLength={255}
+                value={form.title}
+                onChange={(e) => setForm({ ...form, title: e.target.value })}
+              />
+            </label>
+            <label className="block space-y-2 text-sm">
+              <span>Description and input/output format</span>
+              <Textarea
+                required
+                rows={7}
+                value={form.description}
+                onChange={(e) =>
+                  setForm({ ...form, description: e.target.value })
+                }
+              />
+            </label>
+            <div className="flex gap-5">
+              <label className="space-y-2 text-sm">
+                <span className="block">Difficulty</span>
+                <select
+                  className="rounded border bg-background p-2"
+                  value={form.difficulty}
+                  onChange={(e) =>
+                    setForm({
+                      ...form,
+                      difficulty: e.target
+                        .value as CreateProblemData["difficulty"],
+                    })
+                  }
+                >
+                  {["easy", "medium", "hard"].map((d) => (
+                    <option key={d}>{d}</option>
+                  ))}
+                </select>
+              </label>
+              <label className="space-y-2 text-sm">
+                <span className="block">Points</span>
+                <Input
+                  className="w-28"
+                  type="number"
+                  required
+                  min={1}
+                  value={form.points}
+                  onChange={(e) =>
+                    setForm({ ...form, points: Number(e.target.value) })
+                  }
+                />
+              </label>
+            </div>
+            <div className="flex justify-between">
+              <Button type="submit">
+                {busy ? "Saving..." : "Save problem"}
+              </Button>
+              {selected && (
+                <Button
+                  type="button"
+                  variant="destructive"
+                  onClick={() => {
+                    if (
+                      window.confirm(
+                        "Delete this problem, all its test cases, and submissions?",
+                      )
+                    )
+                      action(async () => {
+                        await problemService.deleteProblem(selected);
+                        setSelected(null);
+                        setForm(empty);
+                        setCases([]);
+                        setPage(1);
+                        const firstPage = await problemService.listProblems(1, 20);
+                        setRows(firstPage.results);
+                        setPages(firstPage.total_pages);
+                        setNotice("Problem deleted.");
+                      });
+                  }}
+                >
+                  Delete problem
+                </Button>
+              )}
+            </div>
+          </form>
+          {selected && (
+            <section className="space-y-4 rounded border bg-card p-5">
+              <h2 className="font-semibold">Test cases</h2>
+              <p className="text-xs text-muted-foreground">
+                Only the first three public cases are shown as samples. Private
+                cases are used for evaluation only.
+              </p>
+              {cases.map((tc, i) => (
+                <div
+                  key={tc.id}
+                  className="flex items-start justify-between gap-3 rounded border p-3"
+                >
+                  <div className="min-w-0">
+                    <p className="text-sm">
+                      Test {i + 1} · {tc.is_public ? "Public" : "Private"}
+                    </p>
+                    <pre className="mt-2 max-h-24 overflow-auto whitespace-pre-wrap break-words text-xs">
+                      {tc.input || "(empty input)"}
+                    </pre>
+                  </div>
+                  <div className="flex gap-2">
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      onClick={() => {
+                        setCaseId(tc.id!);
+                        setTest({
+                          input: tc.input,
+                          expected_output: tc.expected_output,
+                          is_public: tc.is_public,
+                        });
+                      }}
                     >
-                      <SelectTrigger id="difficulty">
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="easy">Easy</SelectItem>
-                        <SelectItem value="medium">Medium</SelectItem>
-                        <SelectItem value="hard">Hard</SelectItem>
-                      </SelectContent>
-                    </Select>
+                      Edit
+                    </Button>
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      onClick={() => {
+                        if (window.confirm("Delete this test case?"))
+                          action(async () => {
+                            await problemService.deleteTestCase(
+                              selected,
+                              tc.id!,
+                            );
+                            setCases(
+                              await problemService.listTestCases(selected),
+                            );
+                            if (caseId === tc.id) {
+                              setCaseId(null);
+                              setTest(emptyCase);
+                            }
+                          });
+                      }}
+                    >
+                      Delete
+                    </Button>
                   </div>
-
-                  <div className="space-y-2">
-                    <Label htmlFor="points">Points</Label>
-                    <Input
-                      id="points"
-                      type="number"
-                      min="1"
-                      value={problemData.points}
-                      onChange={(e) => setProblemData({ ...problemData, points: parseInt(e.target.value) })}
-                      required
-                      disabled={loading}
-                    />
-                  </div>
                 </div>
-
-                <Button
-                  type="submit"
-                  className="w-full gradient-primary"
-                  disabled={loading}
-                >
-                  {loading && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
-                  {loading ? 'Creating...' : 'Create Problem'}
-                </Button>
-              </form>
-            </CardContent>
-          </Card>
-        </TabsContent>
-
-        <TabsContent value="testcase" className="mt-6">
-          <Card className="shadow-card max-w-2xl">
-            <CardHeader>
-              <div className="flex items-center gap-2">
-                <FileText className="w-5 h-5 text-primary" />
-                <CardTitle>Add Test Case</CardTitle>
-              </div>
-              <CardDescription>
-                Add a test case to an existing problem
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <form onSubmit={handleAddTestCase} className="space-y-4">
-                <div className="space-y-2">
-                  <Label htmlFor="problemId">Problem ID</Label>
-                  <Input
-                    id="problemId"
-                    type="number"
-                    placeholder="Enter problem ID"
-                    value={testCaseData.problemId}
-                    onChange={(e) => setTestCaseData({ ...testCaseData, problemId: e.target.value })}
-                    required
-                    disabled={loading}
-                  />
-                </div>
-
-                <div className="space-y-2">
-                  <Label htmlFor="input">Input</Label>
+              ))}
+              <form className="space-y-3 border-t pt-4" onSubmit={saveCase}>
+                <h3 className="text-sm font-medium">
+                  {caseId ? `Edit test #${caseId}` : "Add test case"}
+                </h3>
+                <label className="block space-y-2 text-sm">
+                  <span>Input (may be empty)</span>
                   <Textarea
-                    id="input"
-                    placeholder="Test case input..."
-                    value={testCaseData.input}
-                    onChange={(e) => setTestCaseData({ ...testCaseData, input: e.target.value })}
-                    required
-                    disabled={loading}
-                  />
-                </div>
-
-                <div className="space-y-2">
-                  <Label htmlFor="expected_output">Expected Output</Label>
-                  <Textarea
-                    id="expected_output"
-                    placeholder="Expected output..."
-                    value={testCaseData.expected_output}
-                    onChange={(e) => setTestCaseData({ ...testCaseData, expected_output: e.target.value })}
-                    required
-                    disabled={loading}
-                  />
-                </div>
-
-                <div className="space-y-2">
-                  <Label htmlFor="visibility">Visibility</Label>
-                  <Select
-                    value={testCaseData.is_public.toString()}
-                    onValueChange={(value) =>
-                      setTestCaseData({ ...testCaseData, is_public: value === 'true' })
+                    rows={3}
+                    value={test.input}
+                    onChange={(e) =>
+                      setTest({ ...test, input: e.target.value })
                     }
-                    disabled={loading}
-                  >
-                    <SelectTrigger id="visibility">
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="true">Public</SelectItem>
-                      <SelectItem value="false">Private</SelectItem>
-                    </SelectContent>
-                  </Select>
+                  />
+                </label>
+                <label className="block space-y-2 text-sm">
+                  <span>Expected output</span>
+                  <Textarea
+                    rows={3}
+                    value={test.expected_output}
+                    onChange={(e) =>
+                      setTest({ ...test, expected_output: e.target.value })
+                    }
+                  />
+                </label>
+                <label className="flex items-center gap-2 text-sm">
+                  <input
+                    type="checkbox"
+                    checked={test.is_public}
+                    onChange={(e) =>
+                      setTest({ ...test, is_public: e.target.checked })
+                    }
+                  />
+                  Public sample
+                </label>
+                <div className="flex gap-3">
+                  <Button type="submit">Save test case</Button>
+                  {caseId && (
+                    <Button
+                      type="button"
+                      variant="outline"
+                      onClick={() => {
+                        setCaseId(null);
+                        setTest(emptyCase);
+                      }}
+                    >
+                      Cancel edit
+                    </Button>
+                  )}
                 </div>
-
-                <Button
-                  type="submit"
-                  className="w-full gradient-primary"
-                  disabled={loading}
-                >
-                  {loading && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
-                  {loading ? 'Adding...' : 'Add Test Case'}
-                </Button>
               </form>
-            </CardContent>
-          </Card>
-        </TabsContent>
-      </Tabs>
+            </section>
+          )}
+        </div>
+      </fieldset>
     </div>
   );
 }

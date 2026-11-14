@@ -1,52 +1,52 @@
-import api, { withFallback } from './api';
-import { ENDPOINTS } from './endpoints';
-import { MOCK_SUBMISSIONS } from './mock/submissions';
-import { MOCK_PROBLEMS } from './mock/problems';
-
+import api from "./api";
 export interface ApiSubmission {
   id: number;
-  problem?: number;
+  problem: number;
   problem_title: string;
   problem_difficulty: string;
   user_username: string;
   language: string;
+  status: "queued" | "running" | "completed" | "failed";
+  kind: "run" | "submit";
   verdict: string;
-  execution_time: number | null; // seconds
-  memory?: number | null; // MB
+  passed_tests: number;
+  total_tests: number;
+  execution_time: number | null;
+  memory_used: number | null;
+  error_message: string;
   submitted_at: string;
   code?: string;
+  sample_results?: {
+    input: string;
+    expected: string;
+    output: string;
+    passed: boolean;
+  }[];
 }
-
-export interface CreateSubmissionData { problem: number; code: string; language: string }
-export interface AIAnalysis { analysis: string; suggestions?: string[]; complexity?: string }
-
-let mockStore = [...MOCK_SUBMISSIONS];
-
+export interface CreateSubmissionData {
+  problem: number;
+  code: string;
+  language: string;
+}
+export const isFinal = (s: ApiSubmission) =>
+  s.status === "completed" || s.status === "failed";
+export const verdictText: Record<string, string> = {
+  P: "Pending",
+  AC: "Accepted",
+  WA: "Wrong Answer",
+  TLE: "Time Limit Exceeded",
+  MLE: "Memory Limit Exceeded",
+  RE: "Runtime Error",
+  CE: "Compilation Error",
+  OT: "Execution Error",
+};
 export const submissionService = {
-  listSubmissions: () =>
-    withFallback(ENDPOINTS.submissions.list, async () => (await api.get<ApiSubmission[]>(ENDPOINTS.submissions.list)).data, () => mockStore),
-
-  createSubmission: (data: CreateSubmissionData) =>
-    withFallback(ENDPOINTS.submissions.create, async () => (await api.post<ApiSubmission>(ENDPOINTS.submissions.create, data)).data, async () => {
-      await new Promise((r) => setTimeout(r, 900));
-      const p = MOCK_PROBLEMS.find((x) => x.id === data.problem);
-      const sub: ApiSubmission = {
-        id: Math.max(...mockStore.map((s) => s.id)) + 1, problem: data.problem, problem_title: p?.title ?? 'Problem', problem_difficulty: p?.difficulty ?? 'easy',
-        user_username: 'you', language: data.language, verdict: Math.random() > 0.3 ? 'Accepted' : 'Wrong Answer',
-        execution_time: +(Math.random() * 0.08 + 0.02).toFixed(3), memory: +(Math.random() * 10 + 15).toFixed(1), submitted_at: new Date().toISOString(), code: data.code,
-      };
-      mockStore = [sub, ...mockStore];
-      return sub;
-    }),
-
-  getSubmission: (id: number) =>
-    withFallback(ENDPOINTS.submissions.detail, async () => (await api.get<ApiSubmission>(ENDPOINTS.submissions.detail(id))).data, () => {
-      const s = mockStore.find((x) => x.id === id);
-      if (!s) throw new Error('Submission not found');
-      return s;
-    }),
-
-  analyzeSubmission: (id: number) =>
-    withFallback(ENDPOINTS.submissions.analyze, async () => (await api.post<AIAnalysis>(ENDPOINTS.submissions.analyze(id))).data,
-      () => ({ analysis: 'Sample analysis: solution is correct and readable.', complexity: 'O(n) time, O(n) space', suggestions: ['Use early return', 'Add edge-case checks'] })),
+  listSubmissions: async (signal?: AbortSignal) =>
+    (await api.get<ApiSubmission[]>("/submissions/", { signal })).data,
+  createSubmission: async (data: CreateSubmissionData) =>
+    (await api.post<ApiSubmission>("/submissions/create/", data)).data,
+  runCode: async (data: CreateSubmissionData) =>
+    (await api.post<ApiSubmission>("/submissions/run/", data)).data,
+  getSubmission: async (id: number, signal?: AbortSignal) =>
+    (await api.get<ApiSubmission>(`/submissions/${id}/`, { signal })).data,
 };
