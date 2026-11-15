@@ -41,8 +41,13 @@ export const verdictText: Record<string, string> = {
   OT: "Execution Error",
 };
 export const submissionService = {
-  listSubmissions: async (signal?: AbortSignal) =>
-    (await api.get<ApiSubmission[]>("/submissions/", { signal })).data,
+  listSubmissions: async (signal?: AbortSignal, problem?: number) =>
+    (
+      await api.get<ApiSubmission[]>("/submissions/", {
+        signal,
+        params: problem ? { problem } : undefined,
+      })
+    ).data,
   createSubmission: async (data: CreateSubmissionData) =>
     (await api.post<ApiSubmission>("/submissions/create/", data)).data,
   runCode: async (data: CreateSubmissionData) =>

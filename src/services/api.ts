@@ -1,5 +1,6 @@
 import axios from "axios";
 import { BASE_URL } from "./endpoints";
+import { clearQueryCache } from "@/lib/queryCache";
 export const AUTH_EXPIRED = "benchcoder:auth-expired";
 export function tokenExpiry(token: string): number {
   try {
@@ -13,6 +14,7 @@ export function tokenExpiry(token: string): number {
   }
 }
 export function clearSession() {
+  clearQueryCache();
   localStorage.removeItem("authToken");
   window.dispatchEvent(new Event(AUTH_EXPIRED));
 }

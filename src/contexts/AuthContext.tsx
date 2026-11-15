@@ -1,6 +1,7 @@
 import React, { createContext, useContext, useState, useEffect } from "react";
 import { authService, UserProfile } from "@/services/authService";
 import { AUTH_EXPIRED } from "@/services/api";
+import { clearQueryCache } from "@/lib/queryCache";
 
 interface AuthContextType {
   user: UserProfile | null;
@@ -36,7 +37,18 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
     if (!authService.isAuthenticated()) authService.logout();
     loadUser();
     const expired = () => setUser(null);
+    let currentToken = localStorage.getItem("authToken");
     const sync = () => {
+      const nextToken = localStorage.getItem("authToken");
+      if (nextToken !== currentToken) {
+        currentToken = nextToken;
+        clearQueryCache();
+        setUser(null);
+        if (authService.isAuthenticated()) {
+          setLoading(true);
+          void loadUser();
+        }
+      }
       if (!authService.isAuthenticated()) {
         setUser(null);
         if (localStorage.getItem("authToken")) authService.logout();

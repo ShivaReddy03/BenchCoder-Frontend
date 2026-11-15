@@ -19,8 +19,9 @@ React/TypeScript/Vite interface for the sibling BenchCoder Django API.
 - Submission history, diagnostics, runtime, memory, and public sample results.
 - Staff-only problem/test-case management.
 
-All data comes from the API. There are no simulated verdicts, offline demo accounts, or AI/RAG features.
+All data comes from the API. There are no simulated verdicts or offline authentication fallbacks. Optional AI hints use real backend retrieval and provider calls; see the backend RAG_DEMO.md for setup.
 
 ## Verify and deploy
 
 Run `npm run build`, `npm run lint`, and `npx tsc --noEmit -p tsconfig.app.json`. Serve the generated `dist` directory with a fallback to `index.html` for client routes. Set the build-time API URL and configure the backend's CORS origins for your frontend deployment. See the backend integration/resilience smoke scripts for actual Redis/Celery/Docker tests.
+

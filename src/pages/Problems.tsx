@@ -1,18 +1,64 @@
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
-import { problemService, ProblemListResponse } from "@/services/problemService";
+import { problemService } from "@/services/problemService";
 import { errorMessage } from "@/services/api";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import {
+  keepPreviousData,
+  useQuery,
+  useQueryClient,
+} from "@tanstack/react-query";
+import { useAuth } from "@/contexts/AuthContext";
+import { publicListOptions } from "@/lib/queryCache";
 export default function Problems() {
   const [page, setPage] = useState(1);
   const [search, setSearch] = useState("");
   const [term, setTerm] = useState("");
   const [difficulty, setDifficulty] = useState("");
-  const [data, setData] = useState<ProblemListResponse | null>(null);
-  const [error, setError] = useState("");
-  const [loading, setLoading] = useState(true);
-  const [retry, setRetry] = useState(0);
+  const { user } = useAuth();
+  const client = useQueryClient();
+  const options = (targetPage: number) =>
+    publicListOptions(
+      [
+        "problems",
+        user?.id,
+        !!user?.is_staff,
+        "list",
+        targetPage,
+        20,
+        term,
+        difficulty,
+      ],
+      (signal) =>
+        problemService.listProblems(targetPage, 20, term, difficulty, signal),
+    );
+  const query = useQuery({
+    ...options(page),
+    placeholderData: keepPreviousData,
+  });
+  const data = query.data;
+  const error = query.error ? errorMessage(query.error) : "";
+  const loading = query.isPending;
+  useEffect(() => {
+    if (
+      data &&
+      !query.isPlaceholderData &&
+      data.current_page < data.total_pages
+    )
+      void client.prefetchQuery(options(page + 1));
+    // The options are determined by these primitives, not the render-time closure.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [
+    data,
+    query.isPlaceholderData,
+    client,
+    page,
+    term,
+    difficulty,
+    user?.id,
+    user?.is_staff,
+  ]);
   useEffect(() => {
     const t = setTimeout(() => {
       setTerm(search);
@@ -20,25 +66,6 @@ export default function Problems() {
     }, 350);
     return () => clearTimeout(t);
   }, [search]);
-  useEffect(() => {
-    let active = true;
-    setLoading(true);
-    setError("");
-    problemService
-      .listProblems(page, 20, term, difficulty)
-      .then((d) => {
-        if (active) setData(d);
-      })
-      .catch((e) => {
-        if (active) setError(errorMessage(e));
-      })
-      .finally(() => {
-        if (active) setLoading(false);
-      });
-    return () => {
-      active = false;
-    };
-  }, [page, term, difficulty, retry]);
   return (
     <div className="mx-auto max-w-6xl px-4 py-8">
       <h1 className="text-2xl font-semibold">Problems</h1>
@@ -71,7 +98,7 @@ export default function Problems() {
       {error ? (
         <div role="alert" className="space-y-3 rounded border p-5">
           <p className="text-destructive">{error}</p>
-          <Button variant="outline" onClick={() => setRetry((v) => v + 1)}>
+          <Button variant="outline" onClick={() => query.refetch()}>
             Retry
           </Button>
         </div>
@@ -139,7 +166,7 @@ export default function Problems() {
           <div className="flex items-center gap-3">
             <Button
               variant="outline"
-              disabled={loading || page <= 1}
+              disabled={query.isFetching || page <= 1}
               onClick={() => setPage((p) => p - 1)}
             >
               Previous
@@ -149,7 +176,11 @@ export default function Problems() {
             </span>
             <Button
               variant="outline"
-              disabled={loading || page >= data.total_pages}
+              disabled={
+                query.isFetching ||
+                query.isPlaceholderData ||
+                page >= data.total_pages
+              }
               onClick={() => setPage((p) => p + 1)}
             >
               Next
