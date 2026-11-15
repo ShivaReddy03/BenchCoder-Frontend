@@ -10,7 +10,7 @@ export const queryClient = new QueryClient({
     },
   },
 });
-const PREFIX = "benchcoder:public:v1:";
+const PREFIX = "benchcoder:public:v2:";
 const TTL = 300000;
 export function clearProblemPersistence() {
   try {
@@ -46,7 +46,7 @@ export function publicProblem(p: Problem): Problem {
     difficulty: p.difficulty,
     points: p.points,
     supported_languages: p.supported_languages?.filter((l) =>
-      ["python", "javascript"].includes(l),
+      ["python", "javascript", "java", "cpp"].includes(l),
     ),
     sample_test_cases: p.sample_test_cases
       ?.filter((t) => t.is_public === true)

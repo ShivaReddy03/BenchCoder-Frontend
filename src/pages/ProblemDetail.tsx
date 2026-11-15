@@ -2,6 +2,8 @@ import { useEffect, useState } from "react";
 import { Link, useParams } from "react-router-dom";
 import CodeMirror from "@uiw/react-codemirror";
 import { python } from "@codemirror/lang-python";
+import { java } from "@codemirror/lang-java";
+import { cpp } from "@codemirror/lang-cpp";
 import { javascript } from "@codemirror/lang-javascript";
 import { vscodeDark, vscodeLight } from "@uiw/codemirror-theme-vscode";
 import { useTheme } from "next-themes";
@@ -19,6 +21,8 @@ import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { SolutionPanel } from "@/components/SolutionPanel";
 import { ProblemSubmissions } from "@/components/ProblemSubmissions";
 const starters: Record<string, string> = {
+  java: 'import java.util.*;\n\npublic class Main {\n    public static void main(String[] args) {\n        Scanner sc = new Scanner(System.in);\n        // Read input and print your answer.\n    }\n}\n',
+  cpp: '#include <iostream>\nusing namespace std;\n\nint main() {\n    ios::sync_with_stdio(false);\n    cin.tie(nullptr);\n    // Read input and print your answer.\n    return 0;\n}\n',
   python:
     "# Read stdin and print your answer.\nimport sys\ndata = sys.stdin.read()\n",
   javascript:
@@ -69,7 +73,7 @@ export default function ProblemDetail() {
     localStorage.setItem(`draft:${user?.id}:${id}:${language}`, value);
   };
   const loadIntoEditor = (nextCode: string, nextLanguage: string) => {
-    if (!["python", "javascript"].includes(nextLanguage)) {
+    if (!["python", "javascript", "java", "cpp"].includes(nextLanguage)) {
       setError("This solution uses an unsupported language.");
       return;
     }
@@ -251,10 +255,10 @@ export default function ProblemDetail() {
               disabled={busy}
               onChange={(e) => setLanguage(e.target.value)}
             >
-              {(problem.supported_languages ?? ["python", "javascript"]).map(
+              {(problem.supported_languages ?? ["python", "javascript", "java", "cpp"]).map(
                 (l) => (
                   <option key={l} value={l}>
-                    {l === "python" ? "Python 3" : "JavaScript"}
+                    {({ python: "Python 3", javascript: "JavaScript", java: "Java 21", cpp: "C++17" } as Record<string, string>)[l] ?? l}
                   </option>
                 ),
               )}
@@ -279,7 +283,7 @@ export default function ProblemDetail() {
           value={code}
           height="420px"
           theme={resolvedTheme === "dark" ? vscodeDark : vscodeLight}
-          extensions={[language === "python" ? python() : javascript()]}
+          extensions={[language === "python" ? python() : language === "java" ? java() : language === "cpp" ? cpp() : javascript()]}
           onChange={changeCode}
           editable={!sending}
           aria-label="Solution code"
